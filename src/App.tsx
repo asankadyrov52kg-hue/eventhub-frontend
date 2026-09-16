@@ -1,5 +1,7 @@
 
 import Header from './header'
+import CreateEvent from './pages/CreateEvent'
+
 
 function App() {
 
@@ -7,6 +9,7 @@ function App() {
   return (
     <>
      <Header></Header>
+     <CreateEvent />
     </>
   )
 }
