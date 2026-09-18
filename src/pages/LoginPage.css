@@ -1,0 +1,166 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 80px);
+  background-color: #f8fafc;
+  padding: 40px 20px;
+  box-sizing: border-box;
+}
+
+.login-card {
+  background: #ffffff;
+  padding: 48px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f1f5f9;
+  width: 100%;
+  max-width: 460px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.login-title {
+  font-size: 32px;
+  font-weight: 800;
+  margin: 0 0 12px 0;
+  color: #0f172a;
+}
+
+.login-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 32px 0;
+  line-height: 1.5;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #0f172a;
+}
+
+/* Инпуты с иконками */
+.input-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  width: 18px;
+  height: 18px;
+  color: #94a3b8;
+}
+
+.icon-left {
+  position: absolute;
+  left: 14px;
+  pointer-events: none;
+}
+
+.input-icon-wrapper input {
+  width: 100%;
+  padding: 12px 14px 12px 42px; /* Отступ слева под иконку */
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  background-color: #ffffff;
+  box-sizing: border-box;
+  color: #0f172a;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-icon-wrapper input::placeholder {
+  color: #94a3b8;
+}
+
+.input-icon-wrapper input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.toggle-password-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Синяя кнопка "Войти" */
+.submit-btn {
+  width: 100%;
+  padding: 14px;
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background-color 0.2s;
+}
+
+.submit-btn:hover {
+  background-color: #1d4ed8;
+}
+
+/* Разделительная линия */
+.divider-container {
+  display: flex;
+  align-items: center;
+  margin: 28px 0;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background-color: #f1f5f9;
+}
+
+.divider-text {
+  padding: 0 12px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Кнопка "Зарегистрироваться" */
+.register-btn {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.register-btn:hover {
+  text-decoration: underline;
+}
+
+.error-message {
+  background-color: #fef2f2;
+  color: #ef4444;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 20px;
+  text-align: left;
+  border: 1px solid #fee2e2;
+}
