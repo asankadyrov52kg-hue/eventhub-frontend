@@ -1,5 +1,5 @@
 import { useState, type FormEvent,  } from "react";
-import "./LoginPage.css";
+import './LoginPage.css';
 
 interface LoginFormData {
   email: string;
