@@ -59,7 +59,6 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
         {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit} className="register-form">
-          {/* Имя */}
           <div className="form-group">
             <label htmlFor="name">Ваше имя</label>
             <div className="input-icon-wrapper">
@@ -107,7 +106,6 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
             </div>
           </div>
 
-          {/* Пароль */}
           <div className="form-group">
             <label htmlFor="password">Пароль</label>
             <div className="input-icon-wrapper">
@@ -150,7 +148,6 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
             </div>
           </div>
 
-          {/* Подтверждение пароля */}
           <div className="form-group">
             <label htmlFor="confirmPassword">Подтвердите пароль</label>
             <div className="input-icon-wrapper">

@@ -1,4 +1,4 @@
-import Header from "./header/Header"; // Проверьте путь к Header, если он в папке header
+import Header from "./header/Header"; 
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import { useState } from "react";
@@ -6,8 +6,6 @@ import { useState } from "react";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState("");
-  
-  // Управляем тем, какая страница открыта: 'login' | 'register' | 'create-event'
   const [currentView, setCurrentView] = useState<"login" | "register" | "create-event">("login");
 
   const handleLogin = async (data: { email: string; password: string }) => {
@@ -17,7 +15,6 @@ function App() {
 
   return (
     <>
-      {/* Шапка должна быть СТРОГО внутри return компонента App */}
       <Header 
         onNavigate={(view) => setCurrentView(view)} 
       />
