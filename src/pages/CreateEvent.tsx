@@ -144,11 +144,11 @@ const getCurrentTime = () => {
         <form onSubmit={handleSubmit}>
           <div className="create-event-content">
 
-            {/* Левая часть */}
+            {}
 
             <div className="create-event-form">
 
-              {/* Название */}
+              {}
 
               <div className="form-field">
                 <label htmlFor="title">
@@ -166,7 +166,7 @@ const getCurrentTime = () => {
                 />
               </div>
 
-              {/* Описание */}
+              {}
 
               <div className="form-field">
                 <label htmlFor="description">
@@ -190,7 +190,7 @@ const getCurrentTime = () => {
                 </div>
               </div>
 
-              {/* Дата и время */}
+              {}
 
               <div className="form-field">
                 <label>
@@ -218,7 +218,7 @@ const getCurrentTime = () => {
                 </div>
               </div>
 
-              {/* Адрес */}
+              {}
 
               <div className="form-field">
                 <label htmlFor="address">
@@ -236,7 +236,7 @@ const getCurrentTime = () => {
                 />
               </div>
 
-              {/* Категория / Цена / Места */}
+              {}
 
               <div className="bottom-fields">
 
@@ -342,7 +342,7 @@ const getCurrentTime = () => {
               </div>
             </div>
 
-            {/* Правая часть — изображение */}
+            {}
 
             <div className="image-section">
 
@@ -421,7 +421,7 @@ const getCurrentTime = () => {
             </div>
           </div>
 
-          {/* Нижняя панель */}
+          {}
 
           <div className="create-event-footer">
 

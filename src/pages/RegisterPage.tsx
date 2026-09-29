@@ -82,7 +82,7 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
             </div>
           </div>
 
-          {/* Email */}
+          {}
           <div className="form-group">
             <label htmlFor="email">Электронная почта</label>
             <div className="input-icon-wrapper">

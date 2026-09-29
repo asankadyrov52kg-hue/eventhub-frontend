@@ -59,7 +59,7 @@ export default function LoginPage({
           <div className="form-group">
             <label htmlFor="email">Электронная почта</label>
             <div className="input-icon-wrapper">
-              {/* Иконка конверта */}
+              {}
               <svg
                 className="input-icon icon-left"
                 viewBox="0 0 24 24"
@@ -83,7 +83,7 @@ export default function LoginPage({
           <div className="form-group">
             <label htmlFor="password">Пароль</label>
             <div className="input-icon-wrapper">
-              {/* Иконка замка */}
+              {}
               <svg
                 className="input-icon icon-left"
                 viewBox="0 0 24 24"
@@ -103,7 +103,7 @@ export default function LoginPage({
                 onChange={(e) => setPassword(e.target.value)}
               />
 
-              {/* Иконка глазика */}
+              {}
               <button
                 type="button"
                 className="toggle-password-btn"

@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 * {
   box-sizing: border-box;
 }
@@ -40,7 +42,6 @@ select {
   margin: 0 auto;
 }
 
-/* Header */
 
 .create-event-header {
   margin-bottom: 34px;
@@ -61,7 +62,6 @@ select {
   color: #64748b;
 }
 
-/* Main content */
 
 .create-event-content {
   display: grid;
@@ -69,7 +69,6 @@ select {
   gap: 32px;
 }
 
-/* Form */
 
 .create-event-form {
   display: flex;
@@ -162,7 +161,6 @@ select {
     0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-/* Description */
 
 .textarea-wrapper {
   position: relative;
@@ -178,7 +176,6 @@ select {
   color: #94a3b8;
 }
 
-/* Date / Time */
 
 .date-time-row {
   display: grid;
@@ -186,7 +183,6 @@ select {
   gap: 16px;
 }
 
-/* Bottom fields */
 
 .bottom-fields {
   display: grid;
@@ -194,7 +190,6 @@ select {
   gap: 16px;
 }
 
-/* Price */
 
 .input-with-icon {
   position: relative;
@@ -218,7 +213,6 @@ select {
   padding-left: 42px;
 }
 
-/* Image */
 
 .image-section {
   width: 100%;
@@ -301,7 +295,6 @@ select {
   color: #94a3b8;
 }
 
-/* Footer */
 
 .create-event-footer {
   display: flex;
@@ -366,7 +359,6 @@ select {
   background: #1d4ed8;
 }
 
-/* Responsive */
 
 @media (max-width: 1100px) {
   .create-event-content {
@@ -414,7 +406,6 @@ select {
   color: #dc2626;
 }
 
-/* Number inputs */
 
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
