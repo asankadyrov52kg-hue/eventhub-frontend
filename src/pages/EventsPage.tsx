@@ -6,7 +6,7 @@ import EventCard from "../components/EventCard";
 
 const categories: EventCategory[] = [
   "Концерт",
-  "Лекция",
+  "Лекция", 
   "Выставка",
   "Спорт",
   "Мастер-класс",

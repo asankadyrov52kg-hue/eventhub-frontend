@@ -12,9 +12,9 @@ export interface EventItem {
   id: string;
   title: string;
   category: EventCategory;
-  date: string; // например "12 июн. 2025, 19:00"
+  date: string;
   location: string;
-  price: string; // "от 1 200 ₽" | "500 ₽" | "Бесплатно"
+  price: string;
   seatsLeft: number;
   imageUrl: string;
 }
