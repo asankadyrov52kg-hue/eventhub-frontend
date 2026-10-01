@@ -1,88 +1,137 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import {
-  deleteEvent,
-  getCurrentUserId,
-  getEvents,
-  getMyRegistrations,
-  updateEvent,
-  type MyEvent,
-} from "../api/events";
+import { useNavigate } from "react-router-dom";
+import { deleteEvent, updateEvent, type MyEvent } from "../api/events";
 import { type EventItem } from "../types/event";
 import EventCard from "../components/EventCard";
 import ConfirmModal from "../components/ConfirmModal";
 import EditEventModal from "../components/EditEventModal";
 
 type Tab = "created" | "registered";
-
-type PendingAction = {
-  kind: "delete" | "unregister";
-  event: MyEvent;
-} | null;
+type PendingAction = { kind: "delete" | "unregister"; event: MyEvent } | null;
 
 interface MyEventsPageProps {
-  onCreateEvent: () => void;
-  onBrowseEvents: () => void;
+  onCreateEvent?: () => void;
+  onBrowseEvents?: () => void;
 }
 
-const outlineButton =
-  "flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-medium py-2 rounded-lg transition-colors";
-const dangerButton =
-  "flex-1 border border-red-200 text-red-600 hover:bg-red-50 text-sm font-medium py-2 rounded-lg transition-colors";
+const outlineButton = "flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-medium py-2 rounded-lg transition-colors";
+const dangerButton = "flex-1 border border-red-200 text-red-600 hover:bg-red-50 text-sm font-medium py-2 rounded-lg transition-colors";
 
-export default function MyEventsPage({
-  onCreateEvent,
-  onBrowseEvents,
-}: MyEventsPageProps) {
+export default function MyEventsPage({}: MyEventsPageProps) {
+  const navigate = useNavigate(); 
   const [tab, setTab] = useState<Tab>("created");
   const [created, setCreated] = useState<MyEvent[]>([]);
   const [registered, setRegistered] = useState<MyEvent[]>([]);
-
   const [loading, setLoading] = useState(true);
   const [createdError, setCreatedError] = useState("");
   const [registeredError, setRegisteredError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
-
   const [editing, setEditing] = useState<MyEvent | null>(null);
   const [pending, setPending] = useState<PendingAction>(null);
   const [notice, setNotice] = useState("");
 
-
-  useEffect(() => {
+    useEffect(() => {
     let cancelled = false;
+    setLoading(true);
 
-    Promise.allSettled([getEvents(), getMyRegistrations()]).then(
+    const token = localStorage.getItem("token");
+    let currentUserId: string | null = null;
+
+    if (token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+          window.atob(base64)
+            .split('')
+            .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+            .join('')
+        );
+        const payload = JSON.parse(jsonPayload);
+        currentUserId = payload.id || payload.sub; 
+      } catch (e) {
+        console.error("Ошибка парсинга токена:", e);
+      }
+    }
+
+    const fetchCreatedEvents = fetch("http://localhost:3000/events", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" }
+    }).then(async (res) => {
+      if (!res.ok) throw new Error(`Ошибка сервера: ${res.status}`);
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : (data.data || []);
+      
+      const myCreatedList = currentUserId 
+        ? list.filter((e: any) => e.userId === currentUserId || e.user?.id === currentUserId)
+        : list;
+
+      return myCreatedList.map((e: any) => ({
+        ...e,
+        category: e.category?.name || e.category || "Другое",
+        location: e.address,
+        seatsLeft: e.capacity,
+        imageUrl: e.image || "https://placehold.co"
+      }));
+    });
+
+        const fetchMyRegistrations = fetch("http://localhost:3000/registrations/my", {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
+    }).then(async (res) => {
+      if (!res.ok) throw new Error(`Ошибка сервера: ${res.status}`);
+      const rawData = await res.json();
+      
+      const list = Array.isArray(rawData) ? rawData : (rawData.data || rawData.registrations || []);
+      
+      const detailedEventsPromises = list.map(async (item: any) => {
+        try {
+          const eventRes = await fetch(`http://localhost:3000/events/${item.eventId}`);
+          if (!eventRes.ok) return null;
+          
+          const eventDetails = await eventRes.json();
+          
+          return {
+            ...eventDetails,
+            category: eventDetails.category?.name || eventDetails.category || "Другое",
+            location: eventDetails.address,
+            seatsLeft: eventDetails.capacity,
+            imageUrl: eventDetails.image || "https://placehold.co",
+            registrationId: item.id
+          };
+        } catch {
+          return null;
+        }
+      });
+
+      const detailedEvents = await Promise.all(detailedEventsPromises);
+      return detailedEvents.filter((e) => e !== null);
+    });
+
+    Promise.allSettled([fetchCreatedEvents, fetchMyRegistrations]).then(
       ([events, registrations]) => {
         if (cancelled) return;
-
         if (events.status === "fulfilled") {
-
-
-          const userId = getCurrentUserId();
-          setCreated(
-            userId
-              ? events.value.filter((e) => e.userId === userId)
-              : events.value,
-          );
+          setCreated(events.value);
           setCreatedError("");
         } else {
           setCreatedError((events.reason as Error).message);
         }
-
         if (registrations.status === "fulfilled") {
           setRegistered(registrations.value);
           setRegisteredError("");
         } else {
           setRegisteredError((registrations.reason as Error).message);
         }
-
         setLoading(false);
-      },
+      }
     );
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [reloadKey]);
 
   const retry = () => {
@@ -105,24 +154,37 @@ export default function MyEventsPage({
 
     if (kind === "delete") {
       try {
-        await deleteEvent(event.id);
+        const token = localStorage.getItem("token");
+        await fetch(`http://localhost:3000/events/${event.id}`, {
+          method: "DELETE",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
         setCreated((prev) => prev.filter((e) => e.id !== event.id));
         setNotice("Мероприятие удалено");
       } catch (err) {
         setNotice(`Не удалось удалить: ${(err as Error).message}`);
       }
     } else {
-
-
-      setRegistered((prev) => prev.filter((e) => e.id !== event.id));
-      setNotice("Запись убрана только на этом экране: на сервере нет запроса отмены");
+      try {
+        const token = localStorage.getItem("token");
+        const regId = (event as any).registrationId;
+        if (regId) {
+          await fetch(`http://localhost:3000/registrations/${regId}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+        }
+        setRegistered((prev) => prev.filter((e) => e.id !== event.id));
+        setNotice("Запись успешно отменена");
+      } catch (err) {
+        setNotice("Не удалось отменить запись");
+      }
     }
   };
 
   const handleSave = async (updated: EventItem) => {
     if (!editing) return;
     const merged: MyEvent = { ...editing, ...updated };
-
     try {
       await updateEvent(merged);
       setCreated((prev) => prev.map((e) => (e.id === merged.id ? merged : e)));
@@ -138,10 +200,7 @@ export default function MyEventsPage({
       active ? "text-blue-600" : "text-gray-400 hover:text-gray-600"
     }`;
 
-  const underline = (
-    <span className="absolute -bottom-px left-0 right-0 h-0.5 bg-blue-600 rounded" />
-  );
-
+  const underline = <span className="absolute -bottom-px left-0 right-0 h-0.5 bg-blue-600 rounded" />;
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-6">
@@ -154,7 +213,7 @@ export default function MyEventsPage({
           </p>
         </div>
         <button
-          onClick={onCreateEvent}
+          onClick={() => navigate("/create-event")}
           className="self-start sm:self-auto bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors"
         >
           Создать мероприятие
@@ -189,7 +248,7 @@ export default function MyEventsPage({
       {!loading && tab === "created" && createdError && (
         <ErrorBox
           title="Не удалось загрузить мероприятия"
-          message={`${createdError}. Проверьте, что сервер запущен на http://localhost:3000 (тестовый сервер: npm run mock).`}
+          message={`${createdError}.`}
           onRetry={retry}
         />
       )}
@@ -210,7 +269,7 @@ export default function MyEventsPage({
               title="Вы пока не создали ни одного мероприятия"
               text="Опубликуйте первое событие, и оно появится в афише."
               buttonLabel="Создать мероприятие"
-              onClick={onCreateEvent}
+              onClick={() => navigate("/create-event")}
             />
           }
           actions={(event) => (
@@ -237,7 +296,7 @@ export default function MyEventsPage({
               title="Вы пока никуда не записаны"
               text="Выберите мероприятие в афише и запишитесь на него."
               buttonLabel="Смотреть афишу"
-              onClick={onBrowseEvents}
+              onClick={() => navigate("/events")}
             />
           }
           actions={(event) => (
@@ -333,7 +392,7 @@ interface EmptyStateProps {
   title: string;
   text: string;
   buttonLabel: string;
-  onClick: () => void;
+  onClick?: () => void;
 }
 
 function EmptyState({ title, text, buttonLabel, onClick }: EmptyStateProps) {

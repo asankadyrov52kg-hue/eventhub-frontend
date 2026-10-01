@@ -1,79 +1,70 @@
-import { useState } from "react";
-import Header, { type View } from "./header/Header";
+import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Header from "./header/Header";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import EventsPage from "./pages/EventsPage";
 import MyEventsPage from "./pages/MyEventPage";
 import CreateEvent from "./pages/CreateEvent";
+import EventDetailsPage from "./pages/EventDetailsPage";
 
-const PROTECTED_VIEWS: View[] = ["my-events", "create-event"];
+interface ProtectedRouteProps {
+  isLoggedIn: boolean;
+  children: React.ReactElement; 
+}
+
+function ProtectedRoute({ isLoggedIn, children }: ProtectedRouteProps) {
+  const token = localStorage.getItem("token");
+  if (!isLoggedIn || !token) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentView, setCurrentView] = useState<View>("events");
-  const [afterLoginView, setAfterLoginView] = useState<View | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const navigate = (view: View) => {
-    if (!isLoggedIn && PROTECTED_VIEWS.includes(view)) {
-      setAfterLoginView(view);
-      setCurrentView("login");
-      return;
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
     }
-    setCurrentView(view);
-  };
+    setLoading(false);
+  }, []);
 
-  const handleLogin = async () => {
+  const handleLogin = () => {
     setIsLoggedIn(true);
-    setCurrentView(afterLoginView ?? "events");
-    setAfterLoginView(null);
   };
 
   const handleLogout = () => {
+    localStorage.removeItem("token");
     setIsLoggedIn(false);
-    setAfterLoginView(null);
-    setCurrentView("events");
   };
 
+  if (loading) {
+    return null;
+  }
+
   return (
-    <>
-      <Header
-        currentView={currentView}
-        isLoggedIn={isLoggedIn}
-        onNavigate={navigate}
-        onLogout={handleLogout}
-      />
-
-      <main className="app">
-        {currentView === "login" && (
-          <LoginPage
-            onSubmit={handleLogin}
-            onNavigateToRegister={() => setCurrentView("register")}
-          />
-        )}
-
-        {currentView === "register" && (
-          <RegisterPage
-            onSubmit={(data) => {
-              alert(`Аккаунт ${data.email} успешно создан!`);
-              setCurrentView("login");
-            }}
-            onNavigateToLogin={() => setCurrentView("login")}
-          />
-        )}
-
-        {currentView === "events" && <EventsPage />}
-
-        {currentView === "my-events" && isLoggedIn && (
-          <MyEventsPage
-            onCreateEvent={() => navigate("create-event")}
-            onBrowseEvents={() => navigate("events")}
-          />
-        )}
-
-        {currentView === "create-event" && isLoggedIn && <CreateEvent />}
-      </main>
-    </>
-  );
+  <>
+    <Header isLoggedIn={isLoggedIn} onLogout={handleLogout} />
+    <main className="app">
+      <Routes>
+        <Route path="/" element={isLoggedIn ? <Navigate to="/events" replace /> : <Navigate to="/login" replace />} />
+        <Route path="/login" element={isLoggedIn ? <Navigate to="/events" replace /> : <LoginPage onSubmit={handleLogin} />} />
+        <Route path="/register" element={isLoggedIn ? <Navigate to="/events" replace /> : <RegisterPage />} />
+        <Route path="/events" element={<EventsPage />} />
+        <Route path="/events/:id" element={<EventDetailsPage />} />
+        <Route path="/my-events" element={<ProtectedRoute isLoggedIn={isLoggedIn}><MyEventsPage /></ProtectedRoute>} />
+        <Route path="/create-event" element={<ProtectedRoute isLoggedIn={isLoggedIn}><CreateEvent /></ProtectedRoute>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </main>
+  </>
+);
 }
 
 export default App;

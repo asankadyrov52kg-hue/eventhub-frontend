@@ -14,15 +14,17 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
+    // Валидация полей на фронтенде перед отправкой
     if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       setError("Пожалуйста, заполните все поля.");
       return;
@@ -43,8 +45,40 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
       return;
     }
 
-    if (onSubmit) {
-      onSubmit({ name, email, pass: password });
+    try {
+      setIsLoading(true);
+
+      const response = await fetch("http://localhost:3000/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullname: name.trim(),
+          email: email.trim(),
+          password: password, 
+        }),
+      });
+
+      const data = await response.json();
+
+  
+      if (!response.ok) {
+        throw new Error(data.message || "Что-то пошло не так при регистрации.");
+      }
+
+      if (onSubmit) {
+        onSubmit({ name, email, pass: password });
+      }
+      
+      if (onNavigateToLogin) {
+        onNavigateToLogin();
+      }
+
+    } catch (err: any) {
+      setError(err.message || "Не удалось связаться с сервером.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -62,13 +96,7 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
           <div className="form-group">
             <label htmlFor="name">Ваше имя</label>
             <div className="input-icon-wrapper">
-              <svg
-                className="input-icon icon-left"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+              <svg className="input-icon icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
               </svg>
@@ -78,21 +106,15 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
                 placeholder="Например, Анна Иванова"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                disabled={isLoading}
               />
             </div>
           </div>
 
-          {}
           <div className="form-group">
             <label htmlFor="email">Электронная почта</label>
             <div className="input-icon-wrapper">
-              <svg
-                className="input-icon icon-left"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+              <svg className="input-icon icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="2" y="4" width="20" height="16" rx="2" />
                 <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
               </svg>
@@ -102,6 +124,7 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
                 placeholder="example@mail.ru"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -109,13 +132,7 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
           <div className="form-group">
             <label htmlFor="password">Пароль</label>
             <div className="input-icon-wrapper">
-              <svg
-                className="input-icon icon-left"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+              <svg className="input-icon icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
@@ -125,11 +142,13 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
                 placeholder="Минимум 6 символов"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
               />
               <button
                 type="button"
                 className="toggle-password-btn"
                 onClick={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
               >
                 {showPassword ? (
                   <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -151,13 +170,7 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
           <div className="form-group">
             <label htmlFor="confirmPassword">Подтвердите пароль</label>
             <div className="input-icon-wrapper">
-              <svg
-                className="input-icon icon-left"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
+              <svg className="input-icon icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
@@ -167,11 +180,13 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
                 placeholder="Введите пароль еще раз"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={isLoading}
               />
               <button
                 type="button"
                 className="toggle-password-btn"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                disabled={isLoading}
               >
                 {showConfirmPassword ? (
                   <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -189,22 +204,22 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
               </button>
             </div>
           </div>
-
-          <button type="submit" className="submit-btn">
-            Зарегистрироваться
+          <button type="submit" className="submit-btn" disabled={isLoading}>
+            {isLoading ? "Регистрация..." : "Зарегистрироваться"}
           </button>
         </form>
 
         <div className="divider-container">
           <span className="divider-line"></span>
           <span className="divider-text">Уже есть аккаунт?</span>
-                  <button
-          type="button"
-          className="register-btn"
-          onClick={onNavigateToLogin}
-        >
-          Войти
-        </button>
+          <button
+            type="button"
+            className="register-btn"
+            onClick={onNavigateToLogin}
+            disabled={isLoading}
+          >
+            Войти
+          </button>
           <span className="divider-line"></span>
         </div>
 
