@@ -2,7 +2,7 @@ import { type EventItem } from "../types/event";
 import { formatIsoDate, formatPrice, parsePrice, toIsoDate } from "../data/EventFormat";
 
 
-const API_URL = "http:localhost:3000";
+const API_URL = "http://localhost:3000";
 const PLACEHOLDER_IMAGE = `data:image/svg+xml;utf8,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="160"><rect width="100%" height="100%" fill="#e5e7eb"/></svg>',
 )}`;
