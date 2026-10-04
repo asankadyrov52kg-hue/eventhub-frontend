@@ -1,4 +1,5 @@
-import { useState, type FormEvent,  } from "react";
+import { useState, type SyntheticEvent } from "react";
+import { useNavigate } from "react-router-dom"; // 1. Добавили импорт
 import './LoginPage.css';
 
 interface LoginFormData {
@@ -15,16 +16,20 @@ export default function LoginPage({
   onSubmit,
   onNavigateToRegister,
 }: LoginPageProps) {
+  const navigate = useNavigate(); 
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+
+  const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
@@ -38,8 +43,37 @@ export default function LoginPage({
       return;
     }
 
-    if (onSubmit) {
-      await onSubmit({ email, password });
+    try {
+      setIsLoading(true);
+      const response = await fetch("http://localhost:3000/auth/signin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Неверный логин или пароль.");
+      }
+
+      if (data.accessToken || data.token) {
+        localStorage.setItem("token", data.accessToken || data.token);
+      }
+
+      if (onSubmit) {
+        await onSubmit({ email, password });
+      }
+
+    } catch (err: any) {
+      setError(err.message || "Ошибка подключения к серверу.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -59,7 +93,6 @@ export default function LoginPage({
           <div className="form-group">
             <label htmlFor="email">Электронная почта</label>
             <div className="input-icon-wrapper">
-              {}
               <svg
                 className="input-icon icon-left"
                 viewBox="0 0 24 24"
@@ -76,6 +109,7 @@ export default function LoginPage({
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -83,7 +117,6 @@ export default function LoginPage({
           <div className="form-group">
             <label htmlFor="password">Пароль</label>
             <div className="input-icon-wrapper">
-              {}
               <svg
                 className="input-icon icon-left"
                 viewBox="0 0 24 24"
@@ -101,13 +134,14 @@ export default function LoginPage({
                 placeholder="Введите пароль"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
               />
 
-              {}
               <button
                 type="button"
                 className="toggle-password-btn"
                 onClick={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
               >
                 {showPassword ? (
                   <svg
@@ -137,9 +171,8 @@ export default function LoginPage({
               </button>
             </div>
           </div>
-
-          <button type="submit" className="submit-btn">
-            Войти
+          <button type="submit" className="submit-btn" disabled={isLoading}>
+            {isLoading ? "Вход..." : "Войти"}
           </button>
         </form>
 
@@ -152,7 +185,8 @@ export default function LoginPage({
         <button
           type="button"
           className="register-btn"
-          onClick={onNavigateToRegister}
+          onClick={() => onNavigateToRegister ? onNavigateToRegister() : navigate("/register")}
+          disabled={isLoading}
         >
           Зарегистрироваться
         </button>

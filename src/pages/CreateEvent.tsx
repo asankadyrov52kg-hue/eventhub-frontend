@@ -1,5 +1,11 @@
-import { useState } from 'react';
-import type { ChangeEvent, FormEvent } from 'react';
+import { useState, useEffect } from 'react';
+import {  useNavigate } from 'react-router-dom';
+import type { ChangeEvent, SyntheticEvent } from 'react';
+
+interface Category {
+  id: string;
+  name: string;
+}
 
 interface EventForm {
   title: string;
@@ -13,7 +19,12 @@ interface EventForm {
   image: File | null;
 }
 
-function CreateEvent() {
+interface CreateEventProps {
+  onSuccess?: () => void;
+}
+
+function CreateEvent({ onSuccess }: CreateEventProps) {
+  const navigate = useNavigate();
   const [form, setForm] = useState<EventForm>({
     title: '',
     description: '',
@@ -27,128 +38,151 @@ function CreateEvent() {
   });
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [globalError, setGlobalError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/categories");
+        if (!response.ok) throw new Error("Не удалось загрузить категории");
+
+        const data = await response.json();
+        setCategories(data);
+      } catch (err: any) {
+        console.error("Ошибка загрузки категорий:", err.message);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleChange = (
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = event.target;
-
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     if (!['image/jpeg', 'image/png'].includes(file.type)) {
       alert('Можно загрузить только JPG или PNG');
       return;
     }
-
     if (file.size > 5 * 1024 * 1024) {
       alert('Размер изображения не должен превышать 5 МБ');
       return;
     }
-
-    setForm((prev) => ({
-      ...prev,
-      image: file,
-    }));
-
+    setForm((prev) => ({ ...prev, image: file }));
     setImagePreview(URL.createObjectURL(file));
   };
-  
-  const [errors, setErrors] = useState({
-    price: '',
-    seats: '',
-    });
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const [errors, setErrors] = useState({ price: '', seats: '' });
+
+  const handleSubmit = async (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setGlobalError(null);
 
-  const price = Number(form.price);
-  const seats = Number(form.seats);
+    const price = Number(form.price);
+    const capacity = Number(form.seats);
 
-  const newErrors = {
-    price: '',
-    seats: '',
+    const newErrors = { price: '', seats: '' };
+    if (form.price === '' || price < 0) newErrors.price = 'Цена не может быть отрицательной';
+    if (form.seats === '' || !Number.isInteger(capacity) || capacity < 1) {
+      newErrors.seats = 'Количество мест должно быть целым числом больше 0';
+    }
+
+    setErrors(newErrors);
+    if (newErrors.price || newErrors.seats) return;
+
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Вы не авторизованы!");
+        return;
+      }
+
+      const isoDateTime = new Date(`${form.date}T${form.time}`).toISOString();
+
+      const formData = new FormData();
+      formData.append('title', form.title.trim());
+      formData.append('description', form.description.trim());
+      formData.append('date', isoDateTime);
+      formData.append('address', form.address.trim());
+      formData.append('price', price.toString());
+      formData.append('capacity', capacity.toString());
+      formData.append('categoryId', form.category);
+
+      if (form.image) {
+        formData.append('image', form.image);
+      }
+
+      const myHeaders = new Headers();
+      myHeaders.append("Authorization", `Bearer ${token}`);
+
+      const response = await fetch("http://localhost:3000/events", {
+        method: "POST",
+        headers: myHeaders,
+        body: formData,
+      });
+
+      let data;
+      try { data = await response.json(); } catch { data = {}; }
+
+      if (!response.ok) {
+        throw new Error(data.message || "Не удалось создать мероприятие.");
+      }
+
+      alert('Мероприятие успешно создано!');
+      if (onSuccess) onSuccess();
+
+    } catch (err: any) {
+      setGlobalError(err.message);
+      alert(err.message || "Ошибка при создании");
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-  if (form.price === '' || price < 0) {
-    newErrors.price = 'Цена не может быть отрицательной';
-  }
-
-  if (
-    form.seats === '' ||
-    !Number.isInteger(seats) ||
-    seats < 1
-  ) {
-    newErrors.seats = 'Количество мест должно быть целым числом больше 0';
-  }
-
-  setErrors(newErrors);
-
-  if (newErrors.price || newErrors.seats) {
-    return;
-  }
-
-  console.log('Данные мероприятия:', {
-    ...form,
-    price,
-    seats,
-  });
-
-  alert('Мероприятие готово к созданию');
-};
 
   const handleCancel = () => {
-    window.history.back();
-  };
+  if (onSuccess) onSuccess();
+  navigate(-1); 
+};
 
   const getTodayDate = () => {
-  const today = new Date();
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
+  const getCurrentTime = () => {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
 
-  return `${year}-${month}-${day}`;
-};
-
-const getCurrentTime = () => {
-  const now = new Date();
-
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-
-  return `${hours}:${minutes}`;
-};
 
   return (
     <main className="create-event-page">
       <div className="create-event-container">
         <div className="create-event-header">
           <h1>Создать мероприятие</h1>
-
-          <p>
-            Расскажите о вашем мероприятии, чтобы привлечь участников
-          </p>
+          <p>  Расскажите о вашем мероприятии, чтобы привлечь участников</p>
         </div>
-
         <form onSubmit={handleSubmit}>
           <div className="create-event-content">
-
-            {}
-
+            { }
             <div className="create-event-form">
 
-              {}
+              { }
 
               <div className="form-field">
                 <label htmlFor="title">
@@ -166,7 +200,7 @@ const getCurrentTime = () => {
                 />
               </div>
 
-              {}
+              { }
 
               <div className="form-field">
                 <label htmlFor="description">
@@ -190,7 +224,7 @@ const getCurrentTime = () => {
                 </div>
               </div>
 
-              {}
+              { }
 
               <div className="form-field">
                 <label>
@@ -218,7 +252,7 @@ const getCurrentTime = () => {
                 </div>
               </div>
 
-              {}
+              { }
 
               <div className="form-field">
                 <label htmlFor="address">
@@ -236,7 +270,7 @@ const getCurrentTime = () => {
                 />
               </div>
 
-              {}
+              { }
 
               <div className="bottom-fields">
 
@@ -251,48 +285,17 @@ const getCurrentTime = () => {
                     value={form.category}
                     onChange={handleChange}
                     required
+                    disabled={isLoading}
                   >
-                    <option value="">
-                      Выберите категорию
-                    </option>
-
-                    <option value="concerts">
-                      Концерты и музыка
-                    </option>
-
-                    <option value="sport">
-                      Спорт
-                    </option>
-
-                    <option value="education">
-                      Образование
-                    </option>
-
-                    <option value="business">
-                      Бизнес и конференции
-                    </option>
-
-                    <option value="theatre">
-                      Театр и искусство
-                    </option>
-
-                    <option value="exhibition">
-                      Выставки
-                    </option>
-
-                    <option value="entertainment">
-                      Развлечения
-                    </option>
-
-                    <option value="family">
-                      Для всей семьи
-                    </option>
-
-                    <option value="other">
-                      Другое
-                    </option>
+                    <option value="">Выберите категорию</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
+
 
                 <div className="form-field">
                   <label htmlFor="price">
@@ -336,13 +339,13 @@ const getCurrentTime = () => {
                     required
                   />
                 </div>
-                  {errors.seats && (
-                    <span className="field-error">{errors.seats}</span>
+                {errors.seats && (
+                  <span className="field-error">{errors.seats}</span>
                 )}
               </div>
             </div>
 
-            {}
+            { }
 
             <div className="image-section">
 
@@ -421,7 +424,7 @@ const getCurrentTime = () => {
             </div>
           </div>
 
-          {}
+          { }
 
           <div className="create-event-footer">
 

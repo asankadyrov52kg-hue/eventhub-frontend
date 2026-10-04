@@ -40,7 +40,7 @@ export default function EditEventModal({
     date: initialDate.date,
     time: initialDate.time,
     location: event.location,
-    price: String(parsePrice(event.price)),
+    price: String(parsePrice(String(event.price))),
     seatsLeft: String(event.seatsLeft),
   });
   const [errors, setErrors] = useState<Errors>({});
