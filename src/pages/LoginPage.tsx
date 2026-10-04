@@ -1,4 +1,5 @@
 import { useState, type SyntheticEvent } from "react";
+import { useNavigate } from "react-router-dom"; // 1. Добавили импорт
 import './LoginPage.css';
 
 interface LoginFormData {
@@ -15,17 +16,19 @@ export default function LoginPage({
   onSubmit,
   onNavigateToRegister,
 }: LoginPageProps) {
+  const navigate = useNavigate(); 
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // Состояние загрузки для кнопки
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  // ИСПРАВЛЕНО: Заменили тип события на SyntheticEvent и добавили async
+
   const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
@@ -42,8 +45,6 @@ export default function LoginPage({
 
     try {
       setIsLoading(true);
-
-      // ИСПРАВЛЕНО: Отправка POST-запроса на логин в бэкенд
       const response = await fetch("http://localhost:3000/auth/signin", {
         method: "POST",
         headers: {
@@ -57,18 +58,14 @@ export default function LoginPage({
 
       const data = await response.json();
 
-      // Если бэкенд выкинул ошибку (неверный пароль или email)
       if (!response.ok) {
         throw new Error(data.message || "Неверный логин или пароль.");
       }
 
-      // Сохраняем токен в localStorage (если бэк возвращает accessToken)
-      // Это нужно, чтобы пользователь оставался залогиненным при обновлении страницы
       if (data.accessToken || data.token) {
         localStorage.setItem("token", data.accessToken || data.token);
       }
 
-      // Вызываем родительский сабмит из App.tsx, чтобы переключить isLoggedIn в true
       if (onSubmit) {
         await onSubmit({ email, password });
       }
@@ -174,8 +171,6 @@ export default function LoginPage({
               </button>
             </div>
           </div>
-
-          {/* Кнопка блокируется во время запроса */}
           <button type="submit" className="submit-btn" disabled={isLoading}>
             {isLoading ? "Вход..." : "Войти"}
           </button>
@@ -190,7 +185,7 @@ export default function LoginPage({
         <button
           type="button"
           className="register-btn"
-          onClick={onNavigateToRegister}
+          onClick={() => onNavigateToRegister ? onNavigateToRegister() : navigate("/register")}
           disabled={isLoading}
         >
           Зарегистрироваться

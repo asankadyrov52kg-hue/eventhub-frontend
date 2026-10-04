@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import {  useNavigate } from 'react-router-dom';
 import type { ChangeEvent, SyntheticEvent } from 'react';
 
 interface Category {
@@ -23,6 +24,7 @@ interface CreateEventProps {
 }
 
 function CreateEvent({ onSuccess }: CreateEventProps) {
+  const navigate = useNavigate();
   const [form, setForm] = useState<EventForm>({
     title: '',
     description: '',
@@ -148,8 +150,9 @@ function CreateEvent({ onSuccess }: CreateEventProps) {
   };
 
   const handleCancel = () => {
-    if (onSuccess) onSuccess();
-  };
+  if (onSuccess) onSuccess();
+  navigate(-1); 
+};
 
   const getTodayDate = () => {
     const today = new Date();

@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom"; 
 import './RegisterPage.css';
 
 interface RegisterPageProps {
@@ -7,6 +8,8 @@ interface RegisterPageProps {
 }
 
 export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPageProps) {
+  const navigate = useNavigate(); 
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +27,6 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
     e.preventDefault();
     setError(null);
 
-    // Валидация полей на фронтенде перед отправкой
     if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       setError("Пожалуйста, заполните все поля.");
       return;
@@ -62,7 +64,6 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
 
       const data = await response.json();
 
-  
       if (!response.ok) {
         throw new Error(data.message || "Что-то пошло не так при регистрации.");
       }
@@ -70,10 +71,7 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
       if (onSubmit) {
         onSubmit({ name, email, pass: password });
       }
-      
-      if (onNavigateToLogin) {
-        onNavigateToLogin();
-      }
+      navigate("/events");
 
     } catch (err: any) {
       setError(err.message || "Не удалось связаться с сервером.");
@@ -81,6 +79,8 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
       setIsLoading(false);
     }
   };
+
+
 
   return (
     <div className="register-container">
@@ -215,7 +215,7 @@ export default function RegisterPage({ onSubmit, onNavigateToLogin }: RegisterPa
           <button
             type="button"
             className="register-btn"
-            onClick={onNavigateToLogin}
+            onClick={() => onNavigateToLogin ? onNavigateToLogin() : navigate("/login")}
             disabled={isLoading}
           >
             Войти
